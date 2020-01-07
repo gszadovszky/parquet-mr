@@ -54,6 +54,7 @@ public class ParquetProperties {
   public static final int DEFAULT_MINIMUM_RECORD_COUNT_FOR_CHECK = 100;
   public static final int DEFAULT_MAXIMUM_RECORD_COUNT_FOR_CHECK = 10000;
   public static final int DEFAULT_COLUMN_INDEX_TRUNCATE_LENGTH = 64;
+  public static final int DEFAULT_STATISTICS_TRUNCATE_LENGTH = Integer.MAX_VALUE;
   public static final int DEFAULT_PAGE_ROW_COUNT_LIMIT = 20_000;
   public static final int DEFAULT_MAX_BLOOM_FILTER_BYTES = 1024 * 1024;
 
@@ -215,6 +216,10 @@ public class ParquetProperties {
     return columnIndexTruncateLength;
   }
 
+  public int getStatisticsTruncateLength() {
+    return statisticsTruncateLength;
+  }
+
   public boolean estimateNextSizeCheck() {
     return estimateNextSizeCheck;
   }
@@ -365,7 +370,7 @@ public class ParquetProperties {
     }
 
     public Builder withColumnIndexTruncateLength(int length) {
-      Preconditions.checkArgument(length > 0, "Invalid column index min/max truncate length (negative) : %s", length);
+      Preconditions.checkArgument(length > 0, "Invalid column index min/max truncate length (negative or zero) : %s", length);
       this.columnIndexTruncateLength = length;
       return this;
     }

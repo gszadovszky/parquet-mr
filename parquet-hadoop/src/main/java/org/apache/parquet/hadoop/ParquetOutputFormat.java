@@ -372,6 +372,18 @@ public class ParquetOutputFormat<T> extends FileOutputFormat<Void, T> {
     return conf.getInt(COLUMN_INDEX_TRUNCATE_LENGTH, ParquetProperties.DEFAULT_COLUMN_INDEX_TRUNCATE_LENGTH);
   }
 
+  public static void setStatisticsTruncateLength(JobContext jobContext, int length) {
+    setStatisticsTruncateLength(getConfiguration(jobContext), length);
+  }
+
+  private static void setStatisticsTruncateLength(Configuration conf, int length) {
+    conf.setInt(STATISTICS_TRUNCATE_LENGTH, length);
+  }
+
+  private static int getStatisticsTruncateLength(Configuration conf) {
+    return conf.getInt(STATISTICS_TRUNCATE_LENGTH, ParquetProperties.DEFAULT_STATISTICS_TRUNCATE_LENGTH);
+  }
+
   public static void setPageRowCountLimit(JobContext jobContext, int rowCount) {
     setPageRowCountLimit(getConfiguration(jobContext), rowCount);
   }
@@ -469,6 +481,7 @@ public class ParquetOutputFormat<T> extends FileOutputFormat<Void, T> {
         .withMinRowCountForPageSizeCheck(getMinRowCountForPageSizeCheck(conf))
         .withMaxRowCountForPageSizeCheck(getMaxRowCountForPageSizeCheck(conf))
         .withColumnIndexTruncateLength(getColumnIndexTruncateLength(conf))
+        .withStatisticsTruncateLength(getStatisticsTruncateLength(conf))
         .withPageRowCountLimit(getPageRowCountLimit(conf))
         .withPageWriteChecksumEnabled(getPageWriteChecksumEnabled(conf))
         .build();
@@ -500,7 +513,7 @@ public class ParquetOutputFormat<T> extends FileOutputFormat<Void, T> {
     WriteContext init = writeSupport.init(conf);
     ParquetFileWriter w = new ParquetFileWriter(HadoopOutputFile.fromPath(file, conf),
         init.getSchema(), mode, blockSize, maxPaddingSize, props.getColumnIndexTruncateLength(),
-        props.getPageWriteChecksumEnabled());
+        props.getStatisticsTruncateLength(), props.getPageWriteChecksumEnabled());
     w.start();
 
     float maxLoad = conf.getFloat(ParquetOutputFormat.MEMORY_POOL_RATIO,
@@ -540,9 +553,7 @@ public class ParquetOutputFormat<T> extends FileOutputFormat<Void, T> {
     Class<?> writeSupportClass = getWriteSupportClass(configuration);
     try {
       return (WriteSupport<T>)checkNotNull(writeSupportClass, "writeSupportClass").newInstance();
-    } catch (InstantiationException e) {
-      throw new BadConfigurationException("could not instantiate write support class: " + writeSupportClass, e);
-    } catch (IllegalAccessException e) {
+    } catch (InstantiationException | IllegalAccessException e) {
       throw new BadConfigurationException("could not instantiate write support class: " + writeSupportClass, e);
     }
   }
